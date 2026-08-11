@@ -1,0 +1,73 @@
+package todo
+
+import (
+	"errors"
+	"fmt"
+)
+
+// Task represents a single todo item
+type Task struct {
+	Text string 
+	Done bool
+}
+
+// NewTask creates and returns a new Task instance
+func NewTask(text string) Task {
+	// WHY: no '*' here because task is tiny, low memory
+	return Task{
+		Text: text,
+		Done: false,
+	}
+} 
+
+// List represents a collection of tasks
+type List struct {
+	// NOTE: don't need to initialize with make(), append() works with nil slices anyway
+	Tasks []Task
+}
+
+// NewList initializes and returns a pointer to a new empty List
+func NewList() *List {
+	// WHY: returns '&' (pointer) so we always change the EXACT SAME list everywhere
+	return &List{}
+}
+
+// Add appends a new task to the list
+func (l *List) Add(text string) {
+	// WHY: need '*' in (l *List) otherwise Go creates a copy and original list stays empty
+	task := NewTask(text)
+	l.Tasks = append(l.Tasks, task)
+}
+
+// Complete marks a task as done by its index
+func (l *List) Complete(index int) error {
+	// NOTE: check if index makes sense, otherwise the app will just crash
+	if index < 0 || index >= len(l.Tasks) {
+		return errors.New("task index out of range") // Go rule: lowercase, no dot at the end
+	}
+
+	l.Tasks[index].Done = true
+
+	return nil
+}
+
+// String formats the entire task list into a user-friendly string
+func (l *List) String() string {
+	if len(l.Tasks) == 0 {
+		return "No tasks in the todo list"
+	}
+
+	result := "Todo List:\n"
+	// WHY: used '*' here just to be consistent with other methods (Add, Complete).
+	for i, task := range l.Tasks {
+		status := " "
+
+		if task.Done {
+			status = "✅"
+		}
+
+		result += fmt.Sprintf("%d. [%s] %s\n", i+1, status, task.Text)
+	}
+
+	return result
+}
