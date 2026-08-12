@@ -3,6 +3,8 @@ package todo
 import (
 	"errors"
 	"fmt"
+	"encoding/json"
+	"os"
 )
 
 // Task represents a single todo item
@@ -70,4 +72,29 @@ func (l *List) String() string {
 	}
 
 	return result
+}
+
+// Save writes the todo list to a file in JSON format
+func (l *List) Save(filename string) error {
+	// WHY: convert struct to JSON bytes
+	data, err := json.Marshal(l)
+	if err != nil {
+		return err
+	}
+
+	// NOTE: 0644 means Owner: Read+Write (6), Group: Read (4), Others: Read (4)
+	return os.WriteFile(filename, data, 0644)
+}
+
+// Load reads a todo list from a file
+func (l *List) Load(filename string) error {
+	// WHY: read raw bytes from the hard drive
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	// WHY: 'l' is already a pointer here, so we pass it directly without '&'
+	// Unmarshal needs the exact memory address to unpack JSON data into it
+	return json.Unmarshal(data, l)
 }

@@ -2,6 +2,7 @@ package todo
 
 import (
 	"testing"
+	"os"
 )
 
 // TestNewTask checks if a single task is created with correct defaults
@@ -52,5 +53,36 @@ func TestCompleteTask(t *testing.T) {
 	if err == nil {
 		// WHY: 'err == nil' means no error happened, but we EXPECTED an error here
 		t.Error("Expected error when completing non-existent task")
+	}
+}
+
+// TestSaveAndLoad checks if the list can be saved to disk and fully restored
+func TestSaveAndLoad(t *testing.T) {
+	// Create a temporary file for testing
+	tmpfile, err := os.CreateTemp("", "todo-test")
+	if err != nil {
+		t.Fatalf("Couldn't create temp file: %v", err)
+	}
+
+	// NOTE: defer runs this right before the function finishes to clean up the disk
+	defer os.Remove(tmpfile.Name())
+
+	list := NewList()
+	list.Add("Task 1")
+	list.Add("Task 2")
+	list.Complete(0)
+
+	if err := list.Save(tmpfile.Name()); err != nil {
+		t.Fatalf("Failed to save list: %v", err)
+	}
+
+	loadedList := NewList()
+	if err := loadedList.Load(tmpfile.Name()); err != nil {
+		t.Fatalf("Failed to load list: %v", err)
+	} 
+
+	// WHY: verify that the slice length is exactly the same after loading
+	if len(loadedList.Tasks) != 2 {
+		t.Errorf("Expected 2 tasks, got %d", len(loadedList.Tasks))
 	}
 }
