@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"strconv"
 
 	"github.com/ove4lo/GoToDo/internal/todo"
 )
@@ -35,22 +36,50 @@ func main() {
 	// WHY: the first word after the program name is always our action (add, complete, etc.)
 	command := args[0]
 
-	if command == "add" {
-		// NOTE: verify that the user actually provided some text after 'add'
-		if len(args) < 2 {
-			fmt.Println("Error: missing todo text")
-			os.Exit(1)
-		}
+	switch command {
+		case "add":
+			// NOTE: verify that the user actually provided some text after 'add'
+			if len(args) < 2 {
+				fmt.Println("Error: missing todo text")
+				os.Exit(1)
+			}
 
-		// WHY: merge all separate words into a single sentence using spaces
-		text := strings.Join(args[1:], " ")
-		todoList.Add(text)
-		saveTodos(todoList)
-		fmt.Println("Added:", text)
-	} else {
-		fmt.Printf("Unknown command: %s\n", command)
-		fmt.Println("Available commands: add")
-		os.Exit(1)
+			// WHY: merge all separate words into a single sentence using spaces
+			text := strings.Join(args[1:], " ")
+			todoList.Add(text)
+			saveTodos(todoList)
+			fmt.Println("Added:", text)
+
+		case "list":
+			// WHY: just print the list, fmt will format it with checkboxes automatically
+			fmt.Println(todoList)
+
+		case "complete":
+			// NOTE: check if user provided the task number to complete
+			if len(args) < 2 {
+				fmt.Println("Error: missing item number")
+				os.Exit(1)
+			}
+
+			// WHY: convert string argument (like "1") into a real integer number
+			num, err := strconv.Atoi(args[1])
+			if err != nil {
+				fmt.Println("Error: invalid item number:", args[1])
+				os.Exit(1)
+			}
+
+			if err := todoList.Complete(num - 1); err != nil {
+				fmt.Fprintln(os.Stderr, "Error completing todo:", err)
+				os.Exit(1)
+			}
+
+			saveTodos(todoList)
+			fmt.Println("Marked item as completed")
+
+		default: 
+			fmt.Printf("Unknown command: %s\n", command)
+			fmt.Println("Available commands: add")
+			os.Exit(1)
 	}
 }
 
