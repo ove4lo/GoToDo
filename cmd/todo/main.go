@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ove4lo/GoToDo/internal/todo"
 )
@@ -21,9 +22,36 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	
+	// WHY: os.Args[0] is always the program path, we slice [1:] to get only the words user typed
+	args := os.Args[1:] // Skip the program name
 
-	// WHY: fmt.Println automatically uses our String() method to format the output
-	fmt.Println(todoList)
+	if len(args) == 0 {
+		// NOTE: if user just runs the app without arguments, show current tasks and stop
+		fmt.Println(todoList)
+		return
+	}
+
+	// WHY: the first word after the program name is always our action (add, complete, etc.)
+	command := args[0]
+
+	if command == "add" {
+		// NOTE: verify that the user actually provided some text after 'add'
+		if len(args) < 2 {
+			fmt.Println("Error: missing todo text")
+			os.Exit(1)
+		}
+
+		// WHY: merge all separate words into a single sentence using spaces
+		text := strings.Join(args[1:], " ")
+		todoList.Add(text)
+		saveTodos(todoList)
+		fmt.Println("Added:", text)
+	} else {
+		fmt.Printf("Unknown command: %s\n", command)
+		fmt.Println("Available commands: add")
+		os.Exit(1)
+	}
 }
 
 // saveTodos writes the todo list to the JSON file.
