@@ -115,7 +115,7 @@ func runInteractive(list *todo.List) {
 
 		// NOTE: waits for user input. Returns false if terminal closes
 		if !scanner.Scan() {
-			break
+			break // Exits the loop, but we don't know why yet
 		}
 
 		input := scanner.Text()
@@ -160,5 +160,11 @@ func runInteractive(list *todo.List) {
 		default:
 			fmt.Println("Unknown command:", cmd)
 		}
+	}
+
+	// WHY: check if the loop stopped because of a real system error or just EOF
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading input:", err)
+		os.Exit(1) // Stop the app with error code if something actually broke
 	}
 }
