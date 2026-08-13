@@ -19,9 +19,18 @@ func main() {
 	// WHY: flag.Bool returns a pointer (*bool) because it allocates memory before parsing
 	interactiveFlag := flag.Bool("i", false, "Run in interactive mode")
 
+	// WHY: flag.Bool defines standard '-h' help flag
+	helpFlag := flag.Bool("h", false, "Show help information")
+
 	// NOTE: flag.Parse() extracts flags, flag.Args() leaves only clean arguments
 	flag.Parse()
 	args := flag.Args()
+
+	// Show help if the -h flag is provided
+	if *helpFlag {
+		printHelp()
+		return
+	}
 
 	// Load existing todos
 	todoList := todo.NewList()
@@ -37,6 +46,13 @@ func main() {
 	// WHY: if pointer value is true, start the endless loop and exit main immediately
 	if *interactiveFlag {
 		runInteractive(todoList)
+		return
+	}
+
+	// Handle subcommands
+	if len(args) == 0 {
+		// Default action when no command is provided
+		fmt.Println(todoList)
 		return
 	}
 
@@ -83,9 +99,12 @@ func main() {
 		saveTodos(todoList)
 		fmt.Println("Marked item as completed")
 
+	case "help":
+		printHelp()
+
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
-		fmt.Println("Available commands: add")
+		fmt.Println("Run 'todo help' or 'todo -h' for usage information")
 		os.Exit(1)
 	}
 }
@@ -153,6 +172,14 @@ func runInteractive(list *todo.List) {
 
 			saveTodos(list)
 			fmt.Println("Marked item as completed")
+		
+		case "help":
+			fmt.Println("\nAvailable commands:")
+			fmt.Println("	add <text>		- Add a new todo")
+			fmt.Println("	list			- List all todos")
+			fmt.Println("	complete <n>	- Mark item n as completed")
+			fmt.Println("	help			- Show this help message")
+			fmt.Println("	quit			- Exit the program")
 
 		case "quit", "exit":
 			return // stops the entire function, exiting the loop
@@ -167,4 +194,34 @@ func runInteractive(list *todo.List) {
 		fmt.Fprintln(os.Stderr, "Error reading input:", err)
 		os.Exit(1) // Stop the app with error code if something actually broke
 	}
+}
+
+// printHelp outputs the full usage guide for the CLI application
+func printHelp() {
+	// WHY: backticks allow creating readable multi-line text without using '\n'
+	helpText := `
+	Todo - A simple command line todo manager
+	
+	Usage:
+	todo [command] [arguments]
+	todo[flags]
+	
+	Commands:
+		add <text>		Add a new todo item
+		list			List all todo items
+		complete <n>	Mark item n as completed
+		help			Show this help message
+		
+	Flags:
+		-h				Show this help message
+		-i				Run in interactive mode
+	
+	Examples:
+		todo add "Learn Go testing"
+		todo list
+		todo complete 2
+		todo -i
+	`
+
+	fmt.Println(helpText)
 }
